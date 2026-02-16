@@ -8,41 +8,35 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 )
 
-// ==========================================
-// 🖋️ 航海日誌：VS Code 内でここを自由に書き換えてください
-// ==========================================
-const MISSION_DATA = {
+const MISSION = {
   title: "VOYAGE MANIFESTO 2026",
-  content: `福澤諭吉先生が説いた「独立自尊」を胸に。私たちは2026年、米国へと旅立ちます。\nこのカレンダーは365日の航海図。ピースを埋め、一つの星条旗を完成させましょう。\n「唱える大学を創る」——その第一歩を、ここから。`,
-  author: "Founder: Keio SFC Student"
+  content: `福澤諭吉先生が説いた「独立自尊」を胸に。私たちは2026年、米国へと旅立ちます。\nこのカレンダーは365日の航海図。ピースを埋め、一つの星条旗を完成させましょう。`,
+  author: "FOUNDER: KEIO SFC STUDENT"
 };
 
 const NAVY = "#002e65"; const RED = "#cc0033"; const GOLD = "#c5a572";
 const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
 
-export default function UltimateVoyageApp() {
+export default function CalendarOnlyPuzzle() {
   const [entries, setEntries] = useState<any[]>([])
-  const [comments, setComments] = useState<any[]>([])
   const [month, setMonth] = useState(new Date().getMonth())
   const [sel, setSel] = useState<any>(null)
   const [mode, setMode] = useState<'view' | 'edit' | 'reg' | null>(null)
   const [form, setForm] = useState({ name: '', url: '', icon: '', pass: '', tags: ['', '', ''] })
-  const [newComment, setNewComment] = useState({ name: '', body: '' })
 
   const fetchAll = useCallback(async () => {
-    const { data: e } = await supabase.from('advent_calendar').select('*').order('date_day')
-    const { data: c } = await supabase.from('community_wall').select('*').order('created_at', { ascending: false }).limit(10)
-    if (e) setEntries(e); if (c) setComments(c)
+    const { data } = await supabase.from('advent_calendar').select('*').order('date_day')
+    if (data) setEntries(data)
   }, [])
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => setForm(prev => ({ ...prev, icon: reader.result as string }))
-      reader.readAsDataURL(file)
+      const reader = new FileReader();
+      reader.onloadend = () => setForm(prev => ({ ...prev, icon: reader.result as string }));
+      reader.readAsDataURL(file);
     }
   }
 
@@ -50,20 +44,13 @@ export default function UltimateVoyageApp() {
     if (!sel) return
     const payload = {
       user_name: form.name, url: form.url, icon_url: form.icon,
-      edit_password: form.pass || sel.edit_password, 
+      edit_password: form.pass || (sel.edit_password || ''), 
       hashtags: form.tags.filter(t => t !== ''), is_booked: true
     }
     await supabase.from('advent_calendar').update(payload).eq('id', sel.id)
     setSel(null); setMode(null); fetchAll()
   }
 
-  const postComment = async () => {
-    if (!newComment.name || !newComment.body) return
-    await supabase.from('community_wall').insert([{ user_name: newComment.name, comment: newComment.body }])
-    setNewComment({ name: '', body: '' }); fetchAll()
-  }
-
-  // 2026年カレンダー計算（1/1は木曜日）
   const year = 2026;
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayIdx = new Date(year, month, 1).getDay();
@@ -75,103 +62,83 @@ export default function UltimateVoyageApp() {
   const monthEntries = entries.length > 0 ? entries.slice(startId - 1, startId - 1 + daysInMonth) : [];
 
   return (
-    <div className="min-h-screen bg-[#fcfcfd] py-12 px-4 font-sans text-slate-900">
+    <main className="min-h-screen bg-[#fcfcfd] py-12 px-4 font-sans text-slate-900">
       <style>{`
         .puzzle-shape { clip-path: polygon(20% 0%, 50% 15%, 80% 0%, 100% 20%, 85% 50%, 100% 80%, 80% 100%, 50% 85%, 20% 100%, 0% 80%, 15% 50%, 0% 20%); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
       
-      <header className="max-w-6xl mx-auto text-center mb-10">
+      <header className="max-w-4xl mx-auto text-center mb-16">
         <h1 style={{ color: NAVY }} className="text-4xl font-black mb-2 tracking-tighter uppercase italic">Keio ⇄ USA 2026</h1>
-        <p className="text-[10px] font-bold text-slate-400 tracking-[0.4em] uppercase mb-12">Independence & Self-Respect</p>
+        <p className="text-[10px] font-bold text-slate-400 tracking-[0.4em] uppercase mb-10 italic">Independence & Self-Respect</p>
         
-        {/* 航海日誌（説明書き） */}
-        <div className="max-w-3xl mx-auto bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-red-600/5 blur-3xl rounded-full"></div>
+        <div className="max-w-2xl mx-auto bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left relative overflow-hidden">
             <h2 style={{ color: NAVY }} className="text-xs font-black mb-4 tracking-widest uppercase flex items-center gap-2">
-                <span className="w-8 h-[1px] bg-red-600"></span> {MISSION_DATA.title}
+                <span className="w-8 h-[1px] bg-red-600"></span> {MISSION.title}
             </h2>
-            <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line mb-4 font-medium">{MISSION_DATA.content}</p>
-            <p style={{ color: GOLD }} className="text-[10px] font-black text-right italic uppercase tracking-widest">{MISSION_DATA.author}</p>
+            <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line font-medium mb-4">{MISSION.content}</p>
+            <p style={{ color: GOLD }} className="text-[10px] font-black text-right italic uppercase tracking-widest">{MISSION.author}</p>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* 左〜中央：パズルカレンダー (広い領域) */}
-        <section className="lg:col-span-9 flex flex-col items-center">
-          <div className="w-full flex overflow-x-auto gap-2 p-2 mb-8 bg-white rounded-full shadow-inner max-w-lg no-scrollbar border border-slate-100">
-            {Array.from({length:12}).map((_, i) => (
-              <button key={i} onClick={() => setMonth(i)} 
-                className={`flex-shrink-0 w-11 py-2 rounded-full text-[11px] font-black transition-all ${month === i ? 'text-white bg-[#002e65] shadow-lg scale-110' : 'text-slate-300'}`}>{i+1}月</button>
-            ))}
-          </div>
+      <div className="max-w-4xl mx-auto flex flex-col items-center">
+        {/* 月選択バー */}
+        <div className="flex overflow-x-auto gap-2 p-2 mb-8 bg-white rounded-full shadow-inner w-full no-scrollbar border border-slate-100">
+          {Array.from({length:12}).map((_, i) => (
+            <button key={i} onClick={() => setMonth(i)} 
+              className={`flex-shrink-0 w-12 py-2 rounded-full text-[11px] font-black transition-all ${month === i ? 'text-white bg-[#002e65] shadow-lg scale-110' : 'text-slate-300'}`}>{i+1}月</button>
+          ))}
+        </div>
 
-          <div className="w-full max-w-[500px] bg-white rounded-[3.5rem] p-10 shadow-2xl border-b-[16px] relative" style={{ borderColor: RED }}>
-            <div className="grid grid-cols-7 gap-2 relative z-10">
-              <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-center bg-cover rounded-2xl" 
-                   style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg")' }}></div>
-              
-              {WEEKDAYS.map(w => <div key={w} className="text-[9px] font-black text-slate-200 text-center mb-2 italic">{w}</div>)}
-              
-              {Array.from({length: firstDayIdx}).map((_, i) => <div key={i} />)}
-              
-              {monthEntries.length > 0 ? monthEntries.map((item, idx) => {
-                const r = Math.floor((idx + firstDayIdx) / 7);
-                const c = (idx + firstDayIdx) % 7;
-                return (
-                  <div key={item.id} className="relative group">
-                    <button onClick={() => { setSel(item); setMode(item.is_booked ? 'view' : 'reg'); setForm({name:item.user_name||'', url:item.url||'', icon:item.icon_url||'', pass:'', tags:item.hashtags||['','','']}) }}
-                      className={`aspect-square w-full puzzle-shape relative flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:z-30
-                        ${item.is_booked ? 'bg-white shadow-lg' : 'bg-slate-100 opacity-40 hover:opacity-100 hover:bg-red-50'}`}
-                      style={{ 
-                        backgroundImage: item.is_booked ? 'url("https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg")' : '',
-                        backgroundSize: '700% 600%', backgroundPosition: `${(c/6)*100}% ${(r/5)*100}%`
-                      }}>
-                      {item.is_booked ? <img src={item.icon_url} className="w-full h-full object-cover p-1" /> : <span className="text-[10px] font-bold text-slate-400">{idx+1}</span>}
-                    </button>
-                    {item.is_booked && (
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-40 bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl text-center hidden group-hover:block z-50 animate-in fade-in shadow-2xl border border-white/10">
-                        <p className="text-[10px] font-black mb-1">{item.user_name}</p>
-                        <div className="flex flex-wrap justify-center gap-1">
-                          {item.hashtags?.map((t: string, i: number) => <span key={i} className="text-[7px] bg-white/20 px-1.5 py-0.5 rounded-full">#{t}</span>)}
-                        </div>
+        {/* カレンダー本体 */}
+        <div className="w-full max-w-[480px] bg-white rounded-[3.5rem] p-10 shadow-2xl border-b-[16px] relative" style={{ borderColor: RED }}>
+          <div className="grid grid-cols-7 gap-2 relative z-10">
+            {/* 背景星条旗 */}
+            <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-center bg-cover rounded-2xl" 
+                 style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg")' }}></div>
+            
+            {WEEKDAYS.map(w => <div key={w} className="text-[9px] font-black text-slate-200 text-center mb-2">{w}</div>)}
+            
+            {Array.from({length: firstDayIdx}).map((_, i) => <div key={i} />)}
+            
+            {monthEntries.length > 0 ? monthEntries.map((item, idx) => {
+              const r = Math.floor((idx + firstDayIdx) / 7);
+              const c = (idx + firstDayIdx) % 7;
+              return (
+                <div key={item.id} className="relative group">
+                  <button onClick={() => { setSel(item); setMode(item.is_booked ? 'view' : 'reg'); setForm({name:item.user_name||'', url:item.url||'', icon:item.icon_url||'', pass:'', tags:item.hashtags||['','','']}) }}
+                    className={`aspect-square w-full puzzle-shape relative flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:z-30
+                      ${item.is_booked ? 'bg-white shadow-lg' : 'bg-slate-100 opacity-40 hover:opacity-100'}`}
+                    style={{ 
+                      backgroundImage: item.is_booked ? 'url("https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg")' : '',
+                      backgroundSize: '700% 600%', backgroundPosition: `${(c/6)*100}% ${(r/5)*100}%`
+                    }}>
+                    {item.is_booked ? <img src={item.icon_url} className="w-full h-full object-cover p-1" /> : <span className="text-[10px] font-bold text-slate-400">{idx+1}</span>}
+                  </button>
+                  {/* スマート・ホバー */}
+                  {item.is_booked && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-44 bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl text-center hidden group-hover:block z-50 shadow-2xl border border-white/10">
+                      <p className="text-[10px] font-black mb-1">{item.user_name}</p>
+                      <div className="flex flex-wrap justify-center gap-1">
+                        {item.hashtags?.map((t: string, i: number) => <span key={i} className="text-[7px] bg-white/20 px-1.5 py-0.5 rounded-full">#{t}</span>)}
                       </div>
-                    )}
-                  </div>
-                )
-              }) : (
-                <div className="col-span-7 py-10 text-center text-[10px] font-bold text-slate-300 uppercase tracking-widest">Loading Journey...</div>
-              )}
-            </div>
-          </div>
-        </section>
-
-        {/* 右サイド：コミュニティ・ウォール (狭い領域) */}
-        <section className="lg:col-span-3">
-          <div className="bg-white p-6 rounded-[2.5rem] shadow-xl border-t-8 h-[650px] flex flex-col" style={{ borderColor: NAVY }}>
-            <h2 style={{ color: NAVY }} className="text-xs font-black mb-6 uppercase tracking-widest text-center">Community Wall</h2>
-            <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 mb-4">
-                {comments.map(c => (
-                    <div key={c.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                        <p style={{ color: NAVY }} className="text-[9px] font-black mb-1">{c.user_name}</p>
-                        <p className="text-[11px] font-medium text-slate-600 leading-relaxed">{c.comment}</p>
                     </div>
-                ))}
-            </div>
-            <div className="space-y-2 pt-4 border-t border-slate-100">
-                <input placeholder="名前" className="w-full bg-slate-50 rounded-xl p-3 text-[10px] font-bold outline-none border-2 border-transparent focus:border-red-600" value={newComment.name} onChange={e => setNewComment({...newComment, name: e.target.value})} />
-                <textarea placeholder="メッセージ！" className="w-full bg-slate-50 rounded-xl p-3 text-[10px] font-bold outline-none h-20 border-2 border-transparent focus:border-red-600" value={newComment.body} onChange={e => setNewComment({...newComment, body: e.target.value})} />
-                <button onClick={postComment} style={{ backgroundColor: NAVY }} className="w-full py-3 text-white rounded-xl text-[10px] font-black shadow-lg">POST</button>
-            </div>
+                  )}
+                </div>
+              )
+            }) : (
+              <div className="col-span-7 py-20 text-center text-[10px] font-bold text-slate-300 uppercase tracking-[0.3em]">
+                 Establishing Connection...
+              </div>
+            )}
           </div>
-        </section>
+        </div>
       </div>
 
       {/* モーダル */}
       {sel && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-6 z-50">
-          <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-sm shadow-2xl border-t-8" style={{ borderColor: NAVY }}>
+          <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-sm shadow-2xl border-t-8 animate-in zoom-in-95 duration-200" style={{ borderColor: NAVY }}>
             {mode === 'view' ? (
               <div className="text-center">
                 <img src={sel.icon_url} className="w-24 h-24 mx-auto rounded-full mb-4 border-4 p-1 shadow-lg object-cover" style={{ borderColor: RED }} />
@@ -179,10 +146,8 @@ export default function UltimateVoyageApp() {
                 <div className="flex justify-center gap-2 mb-8 flex-wrap">
                     {sel.hashtags?.map((t: string) => <span key={t} className="text-[8px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-full">#{t}</span>)}
                 </div>
-                <a href={sel.url} target="_blank" rel="noopener noreferrer" className="inline-block py-3 px-8 bg-blue-50 text-blue-600 font-black text-xs rounded-full mb-10 hover:bg-blue-100 transition-all uppercase tracking-widest">Visit Link ↗</a>
-                <div className="flex gap-4">
-                  <button onClick={() => setSel(null)} className="flex-1 text-slate-400 font-bold text-[10px] uppercase">Close</button>
-                </div>
+                <a href={sel.url} target="_blank" rel="noopener noreferrer" className="inline-block py-3 px-8 bg-blue-50 text-blue-600 font-black text-xs rounded-full mb-10 uppercase tracking-widest">Visit Link ↗</a>
+                <button onClick={() => setSel(null)} className="w-full text-slate-400 font-bold text-[10px] uppercase">Close</button>
               </div>
             ) : (
               <div className="space-y-4">
@@ -191,9 +156,9 @@ export default function UltimateVoyageApp() {
                     {form.icon ? <img src={form.icon} className="w-16 h-16 rounded-full mb-2 object-cover ring-4 ring-white" /> : <span className="text-[10px] font-black text-slate-300">画像をアップロード</span>}
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                 </label>
-                <input placeholder="名前" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none shadow-inner" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                <input placeholder="名前" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none shadow-inner focus:bg-white" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
                 <div className="grid grid-cols-3 gap-2">
-                    {form.tags.map((t, i) => <input key={i} placeholder={`#タグ${i+1}`} className="bg-slate-50 rounded-lg p-2 text-[9px] font-bold outline-none focus:ring-1 focus:ring-red-600" value={t} onChange={e => { let nt = [...form.tags]; nt[i] = e.target.value; setForm({...form, tags: nt}) }} />)}
+                    {form.tags.map((t, i) => <input key={i} placeholder={`#タグ${i+1}`} className="bg-slate-50 rounded-lg p-2 text-[9px] font-bold outline-none focus:ring-1 focus:ring-red-600 shadow-inner" value={t} onChange={e => { let nt = [...form.tags]; nt[i] = e.target.value; setForm({...form, tags: nt}) }} />)}
                 </div>
                 <input placeholder="URL" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none shadow-inner" value={form.url} onChange={e => setForm({...form, url: e.target.value})} />
                 <input type="password" placeholder="パスワード" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none shadow-inner" value={form.pass} onChange={e => setForm({...form, pass: e.target.value})} />
@@ -206,6 +171,6 @@ export default function UltimateVoyageApp() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   )
 }
