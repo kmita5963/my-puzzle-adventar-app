@@ -1,176 +1,164 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
-
-const MISSION = {
-  title: "VOYAGE MANIFESTO 2026",
-  content: `福澤諭吉先生が説いた「独立自尊」を胸に。私たちは2026年、米国へと旅立ちます。\nこのカレンダーは365日の航海図。ピースを埋め、一つの星条旗を完成させましょう。`,
-  author: "FOUNDER: KEIO SFC STUDENT"
-};
 
 const NAVY = "#002e65"; const RED = "#cc0033"; const GOLD = "#c5a572";
 const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
+const PRESETS = ['https://api.dicebear.com/7.x/avataaars/svg?seed=A', 'https://api.dicebear.com/7.x/avataaars/svg?seed=B', 'https://api.dicebear.com/7.x/bottts/svg?seed=C', 'https://api.dicebear.com/7.x/bottts/svg?seed=D']
 
-export default function CalendarOnlyPuzzle() {
+export default function JourneyDashboard() {
   const [entries, setEntries] = useState<any[]>([])
+  const [comments, setComments] = useState<any[]>([])
   const [month, setMonth] = useState(new Date().getMonth())
   const [sel, setSel] = useState<any>(null)
   const [mode, setMode] = useState<'view' | 'edit' | 'reg' | null>(null)
-  const [form, setForm] = useState({ name: '', url: '', icon: '', pass: '', tags: ['', '', ''] })
+  const [form, setForm] = useState({ name: '', url: '', icon: '', pass: '' })
+  const [newComment, setNewComment] = useState({ name: '', body: '' })
 
-  const fetchAll = useCallback(async () => {
-    const { data } = await supabase.from('advent_calendar').select('*').order('date_day')
-    if (data) setEntries(data)
-  }, [])
-
-  useEffect(() => { fetchAll() }, [fetchAll])
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setForm(prev => ({ ...prev, icon: reader.result as string }));
-      reader.readAsDataURL(file);
-    }
+  useEffect(() => { fetchAll() }, [])
+  async function fetchAll() {
+    const { data: e } = await supabase.from('advent_calendar').select('*').order('date_day')
+    const { data: c } = await supabase.from('comments').select('*').order('created_at', { ascending: false }).limit(10)
+    if (e) setEntries(e); if (c) setComments(c)
   }
 
   const handleSave = async () => {
-    if (!sel) return
-    const payload = {
-      user_name: form.name, url: form.url, icon_url: form.icon,
-      edit_password: form.pass || (sel.edit_password || ''), 
-      hashtags: form.tags.filter(t => t !== ''), is_booked: true
-    }
-    await supabase.from('advent_calendar').update(payload).eq('id', sel.id)
+    if (mode === 'edit' && form.pass !== sel.edit_password) return alert("パスワード不一致")
+    await supabase.from('advent_calendar').update({ user_name: form.name, url: form.url, icon_url: form.icon, edit_password: form.pass || sel.edit_password, is_booked: true }).eq('id', sel.id)
     setSel(null); setMode(null); fetchAll()
   }
 
-  const year = 2026;
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayIdx = new Date(year, month, 1).getDay();
-  const getOffset = (m: number) => {
-    let c = 0; for(let i=0; i<m; i++) c += new Date(year, i+1, 0).getDate();
-    return c;
+  const postComment = async () => {
+    if (!newComment.name || !newComment.body) return;
+    await supabase.from('comments').insert([newComment])
+    setNewComment({ name: '', body: '' }); fetchAll()
   }
-  const startId = (month === 0 ? 0 : getOffset(month)) + 1;
-  const monthEntries = entries.length > 0 ? entries.slice(startId - 1, startId - 1 + daysInMonth) : [];
+
+  const year = 2026; const days = new Date(year, month + 1, 0).getDate(); const first = new Date(year, month, 1).getDay();
+  const getOffset = (m: number) => { let c = 0; for(let i=0; i<m; i++) c += new Date(year, i+1, 0).getDate(); return c; }
+  const startId = getOffset(month) + 1; const currentEntries = entries.slice(startId - 1, startId - 1 + days);
 
   return (
-    <main className="min-h-screen bg-[#fcfcfd] py-12 px-4 font-sans text-slate-900">
-      <style>{`
-        .puzzle-shape { clip-path: polygon(20% 0%, 50% 15%, 80% 0%, 100% 20%, 85% 50%, 100% 80%, 80% 100%, 50% 85%, 20% 100%, 0% 80%, 15% 50%, 0% 20%); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-      `}</style>
+    <div className="min-h-screen bg-[#fcfcfd] py-12 px-4 font-sans text-slate-800">
       
-      <header className="max-w-4xl mx-auto text-center mb-16">
-        <h1 style={{ color: NAVY }} className="text-4xl font-black mb-2 tracking-tighter uppercase italic">Keio ⇄ USA 2026</h1>
-        <p className="text-[10px] font-bold text-slate-400 tracking-[0.4em] uppercase mb-10 italic">Independence & Self-Respect</p>
-        
-        <div className="max-w-2xl mx-auto bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left relative overflow-hidden">
-            <h2 style={{ color: NAVY }} className="text-xs font-black mb-4 tracking-widest uppercase flex items-center gap-2">
-                <span className="w-8 h-[1px] bg-red-600"></span> {MISSION.title}
-            </h2>
-            <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line font-medium mb-4">{MISSION.content}</p>
-            <p style={{ color: GOLD }} className="text-[10px] font-black text-right italic uppercase tracking-widest">{MISSION.author}</p>
+      {/* 1. 説明書き（ストーリー）セクション */}
+      <header className="max-w-3xl mx-auto text-center mb-16">
+        <h1 style={{ color: NAVY }} className="text-4xl font-black mb-4 tracking-tighter uppercase">Keio ⇄ USA 2026 Voyage</h1>
+        <div className="flex justify-center items-center gap-3 mb-8">
+            <div className="h-px w-10 bg-[#002e65]"></div>
+            <p className="text-xs font-bold text-slate-400 tracking-[0.3em]">INDEPENDENCE & SELF-RESPECT</p>
+            <div className="h-px w-10 bg-[#cc0033]"></div>
+        </div>
+        <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 text-left leading-relaxed">
+            <p className="text-slate-600 mb-4 text-sm font-medium">
+                福澤諭吉先生が説いた「独立自尊」の精神を胸に、私たちは2026年、太平洋を越えて米国へと旅立ちます。
+            </p>
+            <p className="text-slate-600 text-sm font-medium">
+                このカレンダーは、365日の航海図。ピースを埋めることで、仲間たちの志が重なり、一つの星条旗が完成します。あなたの声をここに刻み、共に出発の準備をしましょう。
+            </p>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto flex flex-col items-center">
-        {/* 月選択バー */}
-        <div className="flex overflow-x-auto gap-2 p-2 mb-8 bg-white rounded-full shadow-inner w-full no-scrollbar border border-slate-100">
-          {Array.from({length:12}).map((_, i) => (
-            <button key={i} onClick={() => setMonth(i)} 
-              className={`flex-shrink-0 w-12 py-2 rounded-full text-[11px] font-black transition-all ${month === i ? 'text-white bg-[#002e65] shadow-lg scale-110' : 'text-slate-300'}`}>{i+1}月</button>
-          ))}
-        </div>
-
-        {/* カレンダー本体 */}
-        <div className="w-full max-w-[480px] bg-white rounded-[3.5rem] p-10 shadow-2xl border-b-[16px] relative" style={{ borderColor: RED }}>
-          <div className="grid grid-cols-7 gap-2 relative z-10">
-            {/* 背景星条旗 */}
-            <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-center bg-cover rounded-2xl" 
-                 style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg")' }}></div>
-            
-            {WEEKDAYS.map(w => <div key={w} className="text-[9px] font-black text-slate-200 text-center mb-2">{w}</div>)}
-            
-            {Array.from({length: firstDayIdx}).map((_, i) => <div key={i} />)}
-            
-            {monthEntries.length > 0 ? monthEntries.map((item, idx) => {
-              const r = Math.floor((idx + firstDayIdx) / 7);
-              const c = (idx + firstDayIdx) % 7;
-              return (
-                <div key={item.id} className="relative group">
-                  <button onClick={() => { setSel(item); setMode(item.is_booked ? 'view' : 'reg'); setForm({name:item.user_name||'', url:item.url||'', icon:item.icon_url||'', pass:'', tags:item.hashtags||['','','']}) }}
-                    className={`aspect-square w-full puzzle-shape relative flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:z-30
-                      ${item.is_booked ? 'bg-white shadow-lg' : 'bg-slate-100 opacity-40 hover:opacity-100'}`}
-                    style={{ 
-                      backgroundImage: item.is_booked ? 'url("https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg")' : '',
-                      backgroundSize: '700% 600%', backgroundPosition: `${(c/6)*100}% ${(r/5)*100}%`
-                    }}>
-                    {item.is_booked ? <img src={item.icon_url} className="w-full h-full object-cover p-1" /> : <span className="text-[10px] font-bold text-slate-400">{idx+1}</span>}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12">
+        
+        {/* 2. カレンダーセクション (Left/Center) */}
+        <section className="lg:col-span-7 flex flex-col items-center">
+          <div className="w-full max-w-[400px]">
+            <div className="flex overflow-x-auto gap-2 p-2 mb-6 no-scrollbar">
+              {Array.from({length:12}).map((_, i) => (
+                <button key={i} onClick={() => setMonth(i)} 
+                  className={`flex-shrink-0 w-10 py-2 rounded-full text-[10px] font-black transition-all ${month === i ? 'text-white' : 'text-slate-300'}`}
+                  style={{ backgroundColor: month === i ? NAVY : '' }}>{i+1}月</button>
+              ))}
+            </div>
+            <div className="bg-white rounded-[2.5rem] p-6 shadow-2xl border-b-[12px] relative" style={{ borderColor: RED }}>
+              <div className="grid grid-cols-7 gap-1.5 relative z-10">
+                {Array.from({length: first}).map((_, i) => <div key={i} />)}
+                {currentMonthEntries.map((item, idx) => (
+                  <button key={item.id} onClick={() => { setSelectedDay(item); setMode(item.is_booked ? 'view' : 'reg'); setForm({name:item.user_name||'', url:item.url||'', icon:item.icon_url||PRESETS[0], pass:''}) }}
+                    className={`aspect-square relative rounded-lg flex items-center justify-center transition-all ${item.is_booked ? 'bg-white shadow-sm' : 'bg-slate-50 opacity-40 hover:opacity-100'}`}
+                    style={{ clipPath: 'polygon(20% 0%, 50% 15%, 80% 0%, 100% 20%, 85% 50%, 100% 80%, 80% 100%, 50% 85%, 20% 100%, 0% 80%, 15% 50%, 0% 20%)', backgroundImage: item.is_booked ? 'url("https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg")' : '', backgroundSize: '700% 600%', backgroundPosition: `${((idx + first)%7 / 6)*100}% ${Math.floor((idx + first)/7 / 5)*100}%` }}>
+                    {item.is_booked ? <img src={item.icon_url} className="w-full h-full object-cover p-1" /> : <span className="text-[8px] font-bold text-slate-300">{idx+1}</span>}
                   </button>
-                  {/* スマート・ホバー */}
-                  {item.is_booked && (
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-44 bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl text-center hidden group-hover:block z-50 shadow-2xl border border-white/10">
-                      <p className="text-[10px] font-black mb-1">{item.user_name}</p>
-                      <div className="flex flex-wrap justify-center gap-1">
-                        {item.hashtags?.map((t: string, i: number) => <span key={i} className="text-[7px] bg-white/20 px-1.5 py-0.5 rounded-full">#{t}</span>)}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            }) : (
-              <div className="col-span-7 py-20 text-center text-[10px] font-bold text-slate-300 uppercase tracking-[0.3em]">
-                 Establishing Connection...
+                ))}
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        </section>
+
+        {/* 3. コメント欄セクション (Right) */}
+        <section className="lg:col-span-5 space-y-8">
+          <div className="bg-white p-8 rounded-[2rem] shadow-xl border-t-8" style={{ borderColor: NAVY }}>
+            <h2 style={{ color: NAVY }} className="text-xl font-black mb-6 flex items-center gap-2">
+                <span>COMMUNITY WALL</span>
+                <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-400">Voices of 2026</span>
+            </h2>
+            
+            {/* 入力フォーム */}
+            <div className="space-y-3 mb-8">
+                <input placeholder="名前" className="w-full bg-slate-50 rounded-xl p-3 text-xs font-bold outline-none border-2 border-transparent focus:border-red-500 transition-all" value={newComment.name} onChange={e => setNewComment({...newComment, name: e.target.value})} />
+                <textarea placeholder="メッセージをどうぞ..." className="w-full bg-slate-50 rounded-xl p-3 text-xs font-bold outline-none border-2 border-transparent focus:border-red-500 transition-all h-20" value={newComment.body} onChange={e => setNewComment({...newComment, body: e.target.value})} />
+                <button onClick={postComment} style={{ backgroundColor: NAVY }} className="w-full py-3 text-white rounded-xl text-xs font-black shadow-lg hover:brightness-110 active:scale-95 transition-all">POST MESSAGE</button>
+            </div>
+
+            {/* コメント一覧 */}
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
+                {comments.map(c => (
+                    <div key={c.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="flex justify-between items-center mb-2">
+                            <span style={{ color: NAVY }} className="text-[10px] font-black">{c.user_name}</span>
+                            <span className="text-[8px] text-slate-400">{new Date(c.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-xs font-medium text-slate-600">{c.body}</p>
+                    </div>
+                ))}
+            </div>
+          </div>
+        </section>
       </div>
 
-      {/* モーダル */}
+      {/* Modal (予約・閲覧) */}
       {sel && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-6 z-50">
-          <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-sm shadow-2xl border-t-8 animate-in zoom-in-95 duration-200" style={{ borderColor: NAVY }}>
+          <div className="bg-white rounded-[2rem] p-8 w-full max-w-xs shadow-2xl animate-in zoom-in-95 duration-200">
             {mode === 'view' ? (
               <div className="text-center">
-                <img src={sel.icon_url} className="w-24 h-24 mx-auto rounded-full mb-4 border-4 p-1 shadow-lg object-cover" style={{ borderColor: RED }} />
-                <h2 className="text-2xl font-black mb-1" style={{ color: NAVY }}>{sel.user_name}</h2>
-                <div className="flex justify-center gap-2 mb-8 flex-wrap">
-                    {sel.hashtags?.map((t: string) => <span key={t} className="text-[8px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-full">#{t}</span>)}
+                <img src={sel.icon_url} className="w-20 h-20 mx-auto rounded-full mb-4 border-4 p-1 shadow-lg" style={{ borderColor: RED }} />
+                <h2 className="text-2xl font-black mb-4" style={{ color: NAVY }}>{sel.user_name}</h2>
+                <a href={sel.url} target="_blank" className="text-blue-600 font-bold underline text-[10px] mb-8 block uppercase tracking-widest">Visit Profile ↗</a>
+                <div className="flex gap-4">
+                  <button onClick={() => setSel(null)} className="flex-1 text-slate-400 font-bold text-xs">CLOSE</button>
+                  <button onClick={() => setMode('edit')} className="flex-1 py-3 bg-slate-100 rounded-xl font-bold text-slate-600 text-xs">EDIT</button>
                 </div>
-                <a href={sel.url} target="_blank" rel="noopener noreferrer" className="inline-block py-3 px-8 bg-blue-50 text-blue-600 font-black text-xs rounded-full mb-10 uppercase tracking-widest">Visit Link ↗</a>
-                <button onClick={() => setSel(null)} className="w-full text-slate-400 font-bold text-[10px] uppercase">Close</button>
               </div>
             ) : (
               <div className="space-y-4">
-                <h2 className="text-xl font-black text-center mb-6 uppercase tracking-tight" style={{ color: NAVY }}>Day {sel.date_day} Journey</h2>
-                <label className="w-full py-6 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-all">
-                    {form.icon ? <img src={form.icon} className="w-16 h-16 rounded-full mb-2 object-cover ring-4 ring-white" /> : <span className="text-[10px] font-black text-slate-300">画像をアップロード</span>}
-                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                </label>
-                <input placeholder="名前" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none shadow-inner focus:bg-white" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-                <div className="grid grid-cols-3 gap-2">
-                    {form.tags.map((t, i) => <input key={i} placeholder={`#タグ${i+1}`} className="bg-slate-50 rounded-lg p-2 text-[9px] font-bold outline-none focus:ring-1 focus:ring-red-600 shadow-inner" value={t} onChange={e => { let nt = [...form.tags]; nt[i] = e.target.value; setForm({...form, tags: nt}) }} />)}
+                <h2 className="text-xl font-black text-center mb-6" style={{ color: NAVY }}>RESERVE {month+1}/{sel.date_day - startId + 1}</h2>
+                <div className="flex justify-between p-2 bg-slate-50 rounded-2xl">
+                  {PRESETS.map(i => (
+                    <button key={i} onClick={() => setForm({...form, icon: i})} className={`w-9 h-9 rounded-full border-4 transition-all ${form.icon === i ? 'border-red-500 scale-110' : 'border-transparent opacity-40'}`}>
+                      <img src={i} className="rounded-full" />
+                    </button>
+                  ))}
                 </div>
-                <input placeholder="URL" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none shadow-inner" value={form.url} onChange={e => setForm({...form, url: e.target.value})} />
-                <input type="password" placeholder="パスワード" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none shadow-inner" value={form.pass} onChange={e => setForm({...form, pass: e.target.value})} />
-                <div className="flex gap-4 pt-6">
-                  <button onClick={() => setSel(null)} className="flex-1 text-slate-400 font-bold text-[10px] uppercase">Cancel</button>
-                  <button onClick={handleSave} style={{ backgroundColor: NAVY }} className="flex-1 py-4 text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all text-xs uppercase tracking-widest">Save Piece</button>
+                <input placeholder="名前" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                <input placeholder="URL" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none" value={form.url} onChange={e => setForm({...form, url: e.target.value})} />
+                <input type="password" placeholder="パスワード" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none" value={form.pass} onChange={e => setForm({...form, pass: e.target.value})} />
+                <div className="flex gap-4 pt-4">
+                  <button onClick={() => setSel(null)} className="flex-1 text-slate-400 font-bold text-xs">CANCEL</button>
+                  <button onClick={handleSave} style={{ backgroundColor: NAVY }} className="flex-1 py-4 text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all text-xs">SAVE</button>
                 </div>
               </div>
             )}
           </div>
         </div>
       )}
-    </main>
+    </div>
   )
 }
