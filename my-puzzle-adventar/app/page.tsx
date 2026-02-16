@@ -9,16 +9,18 @@ const supabase = createClient(
 )
 
 // ==========================================
-// 🖋️ 航海日誌：ここで文字を自由に変えられます
+// 🖋️ 航海日誌：ここで文字を編集してください
 // ==========================================
-const MISSION_STATEMENT = {
+const MISSION = {
   title: "VOYAGE MANIFESTO 2026",
-  content: `福澤諭吉先生が説いた「独立自尊」を胸に、私たちは2026年、太平洋を越えて米国へと旅立ちます。\nこのカレンダーは、365日の航海図。一つひとつのピースには、仲間の志が刻まれています。\n「唱える大学を創る」——その第一歩を、ここから共に踏み出しましょう。`,
+  content: `福澤諭吉先生の「独立自尊」を胸に。
+私たちは2026年、米国へと旅立ちます。
+一人ひとりのピースが、一つの星条旗を完成させる。
+「唱える大学を創る」——その第一歩を、ここから。`,
   author: "Founder: Keio SFC Student"
 };
-// ==========================================
 
-const NAVY = "#002e65"; const RED = "#cc0033"; const GOLD = "#c5a572";
+const NAVY = "#002e65"; const RED = "#cc0033";
 const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
 
 export default function UltimateFinalVoyage() {
@@ -70,52 +72,41 @@ export default function UltimateFinalVoyage() {
     let c = 0; for(let i=0; i<m; i++) c += new Date(year, i+1, 0).getDate();
     return c;
   }
-  const startId = getOffset(month) + 1;
-  const currentMonthEntries = entries.length > 0 ? entries.slice(startId - 1, startId - 1 + daysInMonth) : [];
-  const progress = entries.length > 0 ? Math.round((entries.filter(e => e.is_booked).length / 365) * 100) : 0;
+  const startId = (month === 0 ? 0 : getOffset(month)) + 1;
+  const monthEntries = entries.length > 0 ? entries.slice(startId - 1, startId - 1 + daysInMonth) : [];
 
   return (
-    <div className="min-h-screen bg-[#fcfcfd] py-12 px-4 font-sans text-slate-900 selection:bg-[#002e65] selection:text-white">
-      <header className="max-w-4xl mx-auto text-center mb-8">
-        <h1 style={{ color: NAVY }} className="text-4xl font-black mb-2 tracking-tighter uppercase italic">Keio ⇄ USA 2026</h1>
-        <p className="text-[10px] font-bold text-slate-400 tracking-[0.4em] mb-12 uppercase">Independence & Self-Respect</p>
-      </header>
-
+    <main className="min-h-screen bg-[#fcfcfd] py-12 px-4 font-sans text-slate-900">
       {/* 航海日誌 */}
-      <section className="max-w-2xl mx-auto mb-16 bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-        <h2 style={{ color: NAVY }} className="text-xs font-black mb-4 tracking-widest uppercase">{MISSION_STATEMENT.title}</h2>
-        <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line mb-4">{MISSION_STATEMENT.content}</p>
-        <p style={{ color: GOLD }} className="text-[10px] font-bold text-right italic">{MISSION_STATEMENT.author}</p>
+      <section className="max-w-2xl mx-auto mb-16 bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
+        <h2 style={{ color: NAVY }} className="text-xs font-black mb-4 tracking-widest uppercase">{MISSION.title}</h2>
+        <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line mb-6 font-medium">{MISSION.content}</p>
+        <p style={{ color: RED }} className="text-[10px] font-black text-right italic uppercase tracking-widest">{MISSION.author}</p>
       </section>
 
-      <div className="max-w-4xl mx-auto mb-10 space-y-6 flex flex-col items-center">
-          <div className="w-full max-w-md bg-white p-2 rounded-full shadow-sm flex overflow-x-auto no-scrollbar gap-1">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <section className="lg:col-span-8 flex flex-col items-center">
+          {/* 月選択 */}
+          <div className="flex overflow-x-auto gap-2 p-2 mb-8 bg-white rounded-full shadow-inner max-w-md w-full no-scrollbar">
             {Array.from({length:12}).map((_, i) => (
               <button key={i} onClick={() => setMonth(i)} 
-                className={`flex-shrink-0 w-10 py-2 rounded-full text-[10px] font-black transition-all ${month === i ? 'text-white' : 'text-slate-300'}`}
-                style={{ backgroundColor: month === i ? NAVY : '' }}>{i+1}月</button>
+                className={`flex-shrink-0 w-10 py-2 rounded-full text-[10px] font-black transition-all ${month === i ? 'text-white bg-[#002e65]' : 'text-slate-300'}`}>{i+1}月</button>
             ))}
           </div>
-          <div className="w-full max-w-md h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                <div className="h-full bg-[#002e65] transition-all duration-1000" style={{ width: `${progress}%` }}></div>
-          </div>
-      </div>
 
-      <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
-        <section className="lg:col-span-8 flex justify-center">
           <div className="w-full max-w-[420px] bg-white rounded-[3rem] p-8 shadow-2xl border-b-[14px] relative" style={{ borderColor: RED }}>
             <div className="grid grid-cols-7 gap-2 relative z-10">
               <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-center bg-cover rounded-2xl" 
                    style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg")' }}></div>
               {Array.from({length: firstDayIdx}).map((_, i) => <div key={i} />)}
-              {currentMonthEntries.map((item, idx) => {
+              {monthEntries.map((item, idx) => {
                 const r = Math.floor((idx + firstDayIdx) / 7);
                 const c = (idx + firstDayIdx) % 7;
                 return (
                   <div key={item.id} className="relative group">
-                    <button onClick={() => { setSelectedDay(item); setMode(item.is_booked ? 'view' : 'reg'); setForm({name:item.user_name||'', url:item.url||'', icon:item.icon_url||'', pass:'', tags:item.hashtags||['','','']}) }}
-                      className={`aspect-square w-full relative flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:z-30
-                        ${item.is_booked ? 'bg-white shadow-lg' : 'bg-slate-100 opacity-40 hover:opacity-100'}`}
+                    <button onClick={() => { setSel(item); setMode(item.is_booked ? 'view' : 'reg'); setForm({name:item.user_name||'', url:item.url||'', icon:item.icon_url||'', pass:'', tags:item.hashtags||['','','']}) }}
+                      className={`aspect-square w-full relative flex items-center justify-center rounded-lg transition-all duration-300 transform group-hover:scale-110 group-hover:z-30
+                        ${item.is_booked ? 'bg-white shadow-md' : 'bg-slate-100 opacity-50 hover:opacity-100'}`}
                       style={{ 
                         clipPath: 'polygon(20% 0%, 50% 15%, 80% 0%, 100% 20%, 85% 50%, 100% 80%, 80% 100%, 50% 85%, 20% 100%, 0% 80%, 15% 50%, 0% 20%)',
                         backgroundImage: item.is_booked ? 'url("https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg")' : '',
@@ -124,10 +115,10 @@ export default function UltimateFinalVoyage() {
                       {item.is_booked ? <img src={item.icon_url} className="w-full h-full object-cover p-1" /> : <span className="text-[10px] font-bold text-slate-400">{idx+1}</span>}
                     </button>
                     {item.is_booked && (
-                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-40 bg-slate-900/90 backdrop-blur-md text-white p-3 rounded-2xl text-center hidden group-hover:block z-50 animate-in fade-in slide-in-from-bottom-2 shadow-2xl">
-                        <p className="text-[10px] font-black mb-1">{item.user_name}</p>
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-40 bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl text-center hidden group-hover:block z-50 shadow-2xl">
+                        <p className="text-[10px] font-black">{item.user_name}</p>
                         <div className="flex flex-wrap justify-center gap-1">
-                          {item.hashtags?.map((t: string, i: number) => <span key={i} className="text-[7px] bg-white/20 px-1.5 py-0.5 rounded-full">#{t}</span>)}
+                          {item.hashtags?.map((t: string, i: number) => <span key={i} className="text-[7px] bg-white/20 px-1 rounded-full">#{t}</span>)}
                         </div>
                       </div>
                     )}
@@ -139,9 +130,8 @@ export default function UltimateFinalVoyage() {
         </section>
 
         {/* コミュニティ・ウォール */}
-        <section className="lg:col-span-4">
-          <div className="bg-white p-6 rounded-[2rem] shadow-xl border-t-8 h-[550px] flex flex-col" style={{ borderColor: NAVY }}>
-            <h2 style={{ color: NAVY }} className="text-sm font-black mb-4 uppercase">Community Wall</h2>
+        <section className="lg:col-span-4 flex flex-col h-[600px] bg-white p-8 rounded-[2rem] shadow-xl border-t-8" style={{ borderColor: NAVY }}>
+            <h2 style={{ color: NAVY }} className="text-sm font-black mb-4 uppercase tracking-widest text-center">Community Wall</h2>
             <div className="flex-1 overflow-y-auto no-scrollbar space-y-4 mb-4">
                 {comments.map(c => (
                     <div key={c.id} className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
@@ -153,9 +143,8 @@ export default function UltimateFinalVoyage() {
             <div className="space-y-2 pt-4 border-t border-slate-100">
                 <input placeholder="名前" className="w-full bg-slate-50 rounded-xl p-3 text-xs font-bold outline-none" value={newComment.name} onChange={e => setNewComment({...newComment, name: e.target.value})} />
                 <textarea placeholder="メッセージ！" className="w-full bg-slate-50 rounded-xl p-3 text-xs font-bold outline-none h-20" value={newComment.body} onChange={e => setNewComment({...newComment, body: e.target.value})} />
-                <button onClick={postComment} style={{ backgroundColor: NAVY }} className="w-full py-3 text-white rounded-xl text-xs font-black">POST MESSAGE</button>
+                <button onClick={postComment} style={{ backgroundColor: NAVY }} className="w-full py-4 text-white rounded-xl text-xs font-black shadow-lg">POST</button>
             </div>
-          </div>
         </section>
       </div>
 
@@ -167,30 +156,30 @@ export default function UltimateFinalVoyage() {
               <div className="text-center">
                 <img src={sel.icon_url} className="w-24 h-24 mx-auto rounded-full mb-4 border-4 p-1 shadow-lg object-cover" style={{ borderColor: RED }} />
                 <h2 className="text-2xl font-black mb-1" style={{ color: NAVY }}>{sel.user_name}</h2>
-                <div className="flex justify-center gap-2 mb-6">
+                <div className="flex justify-center gap-2 mb-6 flex-wrap">
                     {sel.hashtags?.map((t: string) => <span key={t} className="text-[8px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-full">#{t}</span>)}
                 </div>
-                <a href={sel.url} target="_blank" className="text-blue-600 font-bold underline text-xs block mb-8">Visit Link ↗</a>
+                <a href={sel.url} target="_blank" className="inline-block py-3 px-8 bg-blue-50 text-blue-600 font-black text-xs rounded-full mb-10 uppercase">Visit Link ↗</a>
                 <div className="flex gap-4">
-                  <button onClick={() => setSel(null)} className="flex-1 text-slate-400 font-bold text-xs uppercase">Close</button>
-                  <button onClick={() => setMode('edit')} className="flex-1 py-3 bg-slate-100 rounded-xl font-bold text-slate-600 text-xs uppercase">Edit</button>
+                  <button onClick={() => setSel(null)} className="flex-1 text-slate-400 font-bold text-[10px] uppercase tracking-widest">Close</button>
+                  <button onClick={() => setMode('edit')} className="flex-1 py-3 bg-slate-100 rounded-xl font-bold text-slate-600 text-[10px] uppercase tracking-widest">Edit</button>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
-                <h2 className="text-xl font-black text-center" style={{ color: NAVY }}>Day {sel.date_day}</h2>
-                <label className="w-full py-6 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-all">
+                <h2 className="text-xl font-black text-center" style={{ color: NAVY }}>Day {sel.date_day} Journey</h2>
+                <label className="w-full py-6 border-2 border-dashed border-slate-200 rounded-3xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50">
                     {form.icon ? <img src={form.icon} className="w-16 h-16 rounded-full mb-2 object-cover" /> : <span className="text-[10px] font-black text-slate-300">画像をアップロード</span>}
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                 </label>
-                <input placeholder="名前" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                <input placeholder="名前" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none shadow-inner" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
                 <div className="grid grid-cols-3 gap-2">
                     {form.tags.map((t, i) => <input key={i} placeholder={`#タグ${i+1}`} className="bg-slate-50 rounded-lg p-2 text-[9px] font-bold outline-none" value={t} onChange={e => { let nt = [...form.tags]; nt[i] = e.target.value; setForm({...form, tags: nt}) }} />)}
                 </div>
-                <input placeholder="URL" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none" value={form.url} onChange={e => setForm({...form, url: e.target.value})} />
-                <input type="password" placeholder="パスワード" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none" value={form.pass} onChange={e => setForm({...form, pass: e.target.value})} />
+                <input placeholder="URL" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none shadow-inner" value={form.url} onChange={e => setForm({...form, url: e.target.value})} />
+                <input type="password" placeholder="パスワード" className="w-full bg-slate-50 rounded-xl p-4 text-xs font-bold outline-none shadow-inner" value={form.pass} onChange={e => setForm({...form, pass: e.target.value})} />
                 <div className="flex gap-4 pt-4">
-                  <button onClick={() => setSel(null)} className="flex-1 text-slate-400 font-bold text-xs uppercase">Cancel</button>
+                  <button onClick={() => setSel(null)} className="flex-1 text-slate-400 font-bold text-[10px] uppercase">Cancel</button>
                   <button onClick={handleSave} style={{ backgroundColor: NAVY }} className="flex-1 py-4 text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all text-xs uppercase">Save Piece</button>
                 </div>
               </div>
@@ -198,6 +187,6 @@ export default function UltimateFinalVoyage() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   )
 }
