@@ -8,22 +8,22 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 )
 
-// --- 🖋️ 航海日誌：VS Code 内で編集 ---
 const MISSION = {
   title: "VOYAGE MANIFESTO 2026",
-  content: `福澤諭吉先生の「独立自尊」を胸に。私たちは2026年、米国へと旅立ちます。\nこのカレンダーは、志を共にする仲間たちの航海図です。`,
+  content: `福澤諭吉先生の「独立自尊」を胸に。私たちは2026年、米国へと旅立ちます。\n一人ひとりのピースが重なり、一つの星条旗を完成させましょう。`,
   author: "Founder: Keio SFC Student"
 };
 
 const NAVY = "#002e65"; const RED = "#cc0033"; const GOLD = "#c5a572";
-const ORANGE = "#ff8c00"; 
+const ORANGE = "#ff8c00";
 const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
 
-export default function CenteredPuzzleApp() {
+export default function FinalTopModalPuzzle() {
   const [entries, setEntries] = useState<any[]>([])
   const [month, setMonth] = useState(new Date().getMonth())
   const [sel, setSel] = useState<any>(null)
   const [mode, setMode] = useState<'view' | 'edit' | 'reg' | null>(null)
+  // ハッシュタグの初期値を設定
   const [form, setForm] = useState({ name: '', url: '', icon: '', pass: '', tags: ['', '', ''] })
 
   const fetchAll = useCallback(async () => {
@@ -46,8 +46,10 @@ export default function CenteredPuzzleApp() {
     if (!sel) return
     const payload = {
       user_name: form.name, url: form.url, icon_url: form.icon,
-      edit_password: form.pass || (sel.edit_password || ''), 
-      hashtags: form.tags.filter(t => t !== ''), is_booked: true
+      edit_password: form.pass || (sel.edit_password || ''),
+      // 空のタグを除外して保存
+      hashtags: form.tags.filter(t => t.trim() !== ''),
+      is_booked: true
     }
     await supabase.from('advent_calendar').update(payload).eq('id', sel.id)
     setSel(null); setMode(null); fetchAll()
@@ -64,30 +66,40 @@ export default function CenteredPuzzleApp() {
   const monthEntries = entries.length > 0 ? entries.slice(startId - 1, startId - 1 + daysInMonth) : [];
 
   return (
-    <main className="min-h-screen bg-[#fcfcfd] py-10 px-4 font-sans text-slate-900 overflow-hidden">
+    <main className="min-h-screen bg-[#fcfcfd] py-10 pb-40 px-4 font-sans text-slate-900 overflow-y-auto">
       <style>{`
         .puzzle-shape { clip-path: polygon(20% 0%, 50% 15%, 80% 0%, 100% 20%, 85% 50%, 100% 80%, 80% 100%, 50% 85%, 20% 100%, 0% 80%, 15% 50%, 0% 20%); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
       `}</style>
       
-      <header className="max-w-4xl mx-auto text-center mb-6">
-        <h1 style={{ color: NAVY }} className="text-3xl font-black mb-1 tracking-tighter uppercase italic">Keio ⇄ USA 2026</h1>
-        <p className="text-[10px] font-bold text-slate-400 tracking-[0.4em] uppercase mb-6 italic">Independence & Self-Respect</p>
+      <header className="max-w-4xl mx-auto text-center mb-8">
+        <h1 style={{ color: NAVY }} className="text-4xl font-black mb-2 tracking-tighter uppercase italic">Keio ⇄ USA 2026</h1>
+        <p className="text-[10px] font-bold text-slate-400 tracking-[0.4em] uppercase mb-10 italic">Independence & Self-Respect</p>
+        
+        <div className="max-w-2xl mx-auto bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 text-left relative overflow-hidden">
+            <h2 style={{ color: NAVY }} className="text-xs font-black mb-4 tracking-widest uppercase flex items-center gap-2">
+                <span className="w-8 h-[1px] bg-red-600"></span> {MISSION.title}
+            </h2>
+            <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line mb-4 font-medium">{MISSION.content}</p>
+        </div>
       </header>
 
-      <div className="max-w-4xl mx-auto flex flex-col items-center relative">
-        {/* 月選択バー */}
-        <div className="flex overflow-x-auto gap-1.5 p-1.5 mb-8 bg-white rounded-full shadow-inner w-full no-scrollbar border border-slate-100 max-w-sm">
+      <div className="max-w-4xl mx-auto flex flex-col items-center">
+        {/* 月選択 */}
+        <div className="flex overflow-x-auto gap-2 p-2 mb-8 bg-white rounded-full shadow-inner w-full no-scrollbar border border-slate-100 max-w-lg">
           {Array.from({length:12}).map((_, i) => (
             <button key={i} onClick={() => setMonth(i)} 
-              className={`flex-shrink-0 w-9 py-1.5 rounded-full text-[10px] font-black transition-all ${month === i ? 'text-white bg-[#002e65] shadow-md' : 'text-slate-300'}`}>{i+1}月</button>
+              className={`flex-shrink-0 w-11 py-2 rounded-full text-[11px] font-black transition-all ${month === i ? 'text-white bg-[#002e65] shadow-lg scale-110' : 'text-slate-300'}`}>{i+1}月</button>
           ))}
         </div>
 
-        {/* パズルカレンダー */}
-        <div className="w-full max-w-[420px] bg-white rounded-[3rem] p-8 shadow-2xl border-b-[12px] relative" style={{ borderColor: RED }}>
-          <div className="grid grid-cols-7 gap-1.5 relative z-10">
-            {WEEKDAYS.map(w => <div key={w} className="text-[8px] font-black text-slate-200 text-center mb-1 uppercase">{w}</div>)}
+        {/* カレンダー */}
+        <div className="w-full max-w-[480px] bg-white rounded-[3.5rem] p-10 shadow-2xl border-b-[16px] relative" style={{ borderColor: RED }}>
+          <div className="grid grid-cols-7 gap-2 relative z-10">
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-center bg-cover rounded-2xl" 
+                 style={{ backgroundImage: 'url("https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg")' }}></div>
+            
+            {WEEKDAYS.map(w => <div key={w} className="text-[9px] font-black text-slate-200 text-center mb-2">{w}</div>)}
             {Array.from({length: firstDayIdx}).map((_, i) => <div key={i} />)}
             
             {monthEntries.map((item, idx) => {
@@ -97,7 +109,7 @@ export default function CenteredPuzzleApp() {
                 <div key={item.id} className="relative group">
                   <button onClick={() => { setSel(item); setMode(item.is_booked ? 'view' : 'reg'); setForm({name:item.user_name||'', url:item.url||'', icon:item.icon_url||'', pass:'', tags:item.hashtags||['','','']}) }}
                     className={`aspect-square w-full puzzle-shape relative flex items-center justify-center transition-all duration-300 transform group-hover:scale-110 group-hover:z-30
-                      ${item.is_booked ? 'bg-white shadow-md' : 'bg-slate-50 opacity-40 hover:opacity-100 hover:bg-red-50'}`}
+                      ${item.is_booked ? 'bg-white shadow-lg' : 'bg-slate-100 opacity-40 hover:opacity-100 hover:bg-red-50'}`}
                     style={{ 
                       backgroundImage: item.is_booked ? 'url("https://upload.wikimedia.org/wikipedia/commons/a/a4/Flag_of_the_United_States.svg")' : '',
                       backgroundSize: '700% 600%', backgroundPosition: `${(c/6)*100}% ${(r/5)*100}%`
@@ -105,13 +117,14 @@ export default function CenteredPuzzleApp() {
                     {item.is_booked ? <img src={item.icon_url} className="w-full h-full object-cover p-1.5" /> : <span className="text-[10px] font-bold text-slate-400">{idx+1}</span>}
                   </button>
 
-                  {/* だいだい色の情報ボックス */}
+                  {/* ホバー情報 */}
                   {item.is_booked && (
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-40 bg-[#ff8c00] p-3 rounded-2xl text-center hidden group-hover:block z-50 animate-in fade-in shadow-xl">
-                      <p style={{ color: NAVY }} className="text-[10px] font-black mb-1 truncate">{item.user_name}</p>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-44 bg-[#ff8c00] p-3 rounded-2xl text-center hidden group-hover:block z-50 animate-in fade-in shadow-2xl">
+                      <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#ff8c00] rotate-45"></div>
+                      <p style={{ color: NAVY }} className="text-[11px] font-black mb-1.5 border-b border-[#002e65]/20 pb-1">{item.user_name}</p>
                       <div className="flex flex-wrap justify-center gap-1">
                         {item.hashtags?.map((t: string, i: number) => (
-                          <span key={i} className="text-[7px] bg-[#002e65]/10 text-[#002e65] px-1.5 py-0.5 rounded-md font-bold">#{t}</span>
+                          <span key={i} className="text-[7px] bg-[#002e65]/10 text-[#002e65] px-1.5 py-0.5 rounded-full font-bold">#{t}</span>
                         ))}
                       </div>
                     </div>
@@ -123,32 +136,34 @@ export default function CenteredPuzzleApp() {
         </div>
       </div>
 
-      {/* 🌟 修正：カレンダーの真上に被さる中央配置モーダル 🌟 */}
+      {/* 🌟 修正：画面上部に配置されたモーダル 🌟 */}
       {sel && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 z-[100] overflow-y-auto">
-          <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-sm shadow-2xl border-t-8 border-[#002e65] relative my-auto animate-in zoom-in-95">
+        // items-start と pt-12 で画面上部に配置
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-start justify-center p-4 z-50 overflow-y-auto pt-12">
+          <div className="bg-white rounded-[2.5rem] p-8 w-full max-w-sm shadow-2xl border-t-8 border-[#002e65] relative mb-20">
             {mode === 'view' ? (
               <div className="text-center">
-                <img src={sel.icon_url} className="w-20 h-20 mx-auto rounded-full mb-4 border-4 p-1 shadow-lg object-cover ring-2 ring-slate-50" style={{ borderColor: RED }} />
+                <img src={sel.icon_url} className="w-20 h-20 mx-auto rounded-full mb-4 border-4 p-1 shadow-lg object-cover ring-4 ring-slate-50" style={{ borderColor: RED }} />
                 <h2 className="text-2xl font-black mb-1" style={{ color: NAVY }}>{sel.user_name}</h2>
-                <div className="flex justify-center gap-1.5 mb-8 flex-wrap">
+                <div className="flex justify-center gap-2 mb-8 flex-wrap">
                     {sel.hashtags?.map((t: string) => <span key={t} className="text-[8px] font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-full border border-slate-100">#{t}</span>)}
                 </div>
-                <button onClick={() => setSel(null)} className="w-full py-3 bg-slate-100 rounded-xl text-slate-400 font-bold text-[10px] uppercase">Close Window</button>
+                <a href={sel.url} target="_blank" rel="noopener noreferrer" className="inline-block py-3 px-8 bg-blue-50 text-blue-600 font-black text-xs rounded-full mb-10 hover:bg-blue-100 uppercase tracking-widest transition-all">Visit Link ↗</a>
+                <button onClick={() => setSel(null)} className="w-full text-slate-400 font-bold text-[10px] uppercase tracking-tighter">Close Window</button>
               </div>
             ) : (
               <div className="space-y-4">
-                <h2 className="text-xl font-black text-center mb-2 uppercase tracking-tight" style={{ color: NAVY }}>Day {sel.date_day} Journey</h2>
+                <h2 className="text-xl font-black text-center mb-6 uppercase tracking-tight" style={{ color: NAVY }}>Day {sel.date_day} Journey</h2>
                 
-                {/* 🌟 修正：101px 固定の画像プレビュー 🌟 */}
-                <div className="flex flex-col items-center">
+                {/* 101px 固定プレビュー */}
+                <div className="flex flex-col items-center gap-2">
                     <label 
                       style={{ width: '101px', height: '101px' }}
-                      className="border-2 border-dashed border-slate-200 rounded-full flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-all overflow-hidden bg-slate-50 group">
+                      className="border-2 border-dashed border-slate-200 rounded-full flex flex-col items-center justify-center cursor-pointer hover:bg-slate-50 transition-all overflow-hidden bg-slate-50 group relative">
                         {form.icon ? (
                             <img src={form.icon} className="w-full h-full object-cover" />
                         ) : (
-                            <span className="text-[8px] font-black text-slate-300 text-center leading-tight uppercase">Upload<br/>Icon</span>
+                            <span className="text-[8px] font-black text-slate-300 text-center leading-tight">SELECT<br/>PHOTO</span>
                         )}
                         <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                     </label>
@@ -157,7 +172,7 @@ export default function CenteredPuzzleApp() {
                 <div className="space-y-3">
                   <input placeholder="名前 (Name)" className="w-full bg-slate-50 rounded-xl p-3.5 text-xs font-bold outline-none shadow-inner focus:bg-white border border-transparent focus:border-orange-500 transition-all" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
                   
-                  {/* 🌟 修正：3つのハッシュタグ入力欄 🌟 */}
+                  {/* 🌟 復活・修正：3つのハッシュタグ入力欄 🌟 */}
                   <div className="grid grid-cols-3 gap-2">
                     {form.tags.map((t, i) => (
                       <input key={i} placeholder={`#タグ${i+1}`} className="bg-slate-50 rounded-lg p-2 text-[9px] font-bold outline-none shadow-inner border border-transparent focus:border-orange-500 focus:bg-white transition-all" 
@@ -174,7 +189,7 @@ export default function CenteredPuzzleApp() {
                 </div>
                 
                 <div className="flex gap-4 pt-2">
-                  <button onClick={() => setSel(null)} className="flex-1 text-slate-400 font-bold text-[10px] uppercase">Cancel</button>
+                  <button onClick={() => setSel(null)} className="flex-1 text-slate-400 font-bold text-[10px] uppercase tracking-tighter">Cancel</button>
                   <button onClick={handleSave} style={{ backgroundColor: NAVY }} className="flex-1 py-4 text-white font-black rounded-2xl shadow-xl active:scale-95 transition-all text-xs uppercase tracking-widest">Save Piece</button>
                 </div>
               </div>
